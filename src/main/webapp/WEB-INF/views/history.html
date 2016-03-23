@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>历史</title>
+    <script type="text/javascript" src="../../js/laydate.js"></script>
+    <script type="text/javascript" src="../../js/jquery-1.js"></script>
+    <script src="../../js/highcharts.js"></script>
+    <script type="text/javascript">
+        //<![CDATA[
+        $(function () {
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+            draw(laydate.now());
+        });
+        function draw(date) {
+            $.ajax({    //异步请求数据
+                url: '/servlet/cachedData?key=history&ip=' + $("#ip").val() + '&to=' + $('#to').val() + '&date=' + date,
+                type: "POST",
+                data: {
+                    name: 1,
+                    kkk: "ok"
+                },
+                success: function (response) {
+                    var resp = eval("(" + response + ")");
+                    $('#containereden').highcharts(getTemplate('eden', resp));
+                    $('#containersurvivor').highcharts(getTemplate('survivor', resp));
+                    $('#containerold').highcharts(getTemplate('old', resp));
+                    $('#containerperm').highcharts(getTemplate('perm', resp));
+                    $('#containeryonggc').highcharts(getTemplate('yonggc', resp));
+                    $('#containeroldgc').highcharts(getTemplate('oldgc', resp));
+                    $('#containercpu').highcharts(getTemplate('cpu', resp));
+                    $('#containerthread').highcharts(getTemplate('thread', resp));
+                    $('#containerclazz').highcharts(getTemplate('clazz', resp));
+                }
+            });
+        }
+        function addMonitor(str) {
+            var checked = document.getElementById('check' + str).checked;
+            document.getElementById('container' + str).style.display = checked ? 'block' : 'none';
+        }
+
+        function getTemplate(str, resp) {
+            //设置颜色
+            var data = [];
+            var color;
+            var text;
+            var unit;
+            var memory = eval("(" + resp.gcInfo + ")");
+            if ('eden' == str) {
+                color = Highcharts.getOptions().colors[0];
+                data = eval("([" + resp.eden + "])");
+                unit = 'M';
+                text = ' 最大值:' + memory.eden.max + "M,分配:" + memory.eden.committed + "M,已使用:" + memory.eden.used + 'M';
+            } else if ('survivor' == str) {
+                color = Highcharts.getOptions().colors[1];
+                data = eval("([" + resp.survivor + "])");
+                unit = 'M';
+                text = ' 最大值:' + memory.survivor.max + "M,分配:" + memory.survivor.committed + "M,已使用:" + memory.survivor.used + 'M'
+            } else if ('old' == str) {
+                color = Highcharts.getOptions().colors[2];
+                data = eval("([" + resp.old + "])");
+                unit = 'M';
+                text = ' 最大值:' + memory.old.max + "M,分配:" + memory.old.committed + "M,已使用:" + memory.old.used + 'M';
+            } else if ('perm' == str) {
+                color = Highcharts.getOptions().colors[3];
+                data = eval("([" + resp.perm + "])");
+                unit = 'M';
+                text = ' 最大值:' + memory.perm.max + "M,分配:" + memory.perm.committed + "M,已使用:" + memory.perm.used + 'M';
+            } else if ('yonggc' == str) {
+                color = Highcharts.getOptions().colors[4];
+                data = eval("([" + resp.yonggc + "])");
+                unit = 'ms';
+                text = 'GC算法:' + memory.gcname.yongGcName + ',' + memory.eden.yongGcCount + '项收集,用时:' + memory.eden.yongGcTime + 'ms';
+            } else if ('oldgc' == str) {
+                color = Highcharts.getOptions().colors[5];
+                data = eval("([" + resp.oldgc + "])");
+                unit = 'ms';
+                text = 'GC算法:' + memory.gcname.oldGcName + ',' + memory.old.oldGcCount + '项收集,用时:' + memory.old.oldGcTime + 'ms';
+            } else if ('cpu' == str) {
+                color = Highcharts.getOptions().colors[6];
+                data = eval("([" + resp.cpu + "])");
+                unit = '%';
+                text = 'cpu使用率:' + memory.cpuUsage + '%';
+            } else if ('thread' == str) {
+                color = Highcharts.getOptions().colors[7];
+                data = eval("([" + resp.thread + "])");
+                unit = '个';
+                text = '活动线程数:' + memory.thread.totalThreads;
+            } else if ('clazz' == str) {
+                color = Highcharts.getOptions().colors[8];
+                data = eval("([" + resp.clazz + "])");
+                unit = '个';
+                text = '类加载数:' + memory.clazz.totalLoaded;
+            }
+            //设置模板
+            var template = {
+                credits: {
+                    enabled: false
+                },
+                legend: {
+                    enabled: false
+                },
+                chart: {
+                    zoomType: 'x',
+                    type: 'spline',
+                    animation: Highcharts.svg,
+                    marginRight: 10
+                },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 100
+                },
+                title: {
+                    align: 'left',
+                    style: {"fontSize": "12px"},
+                    text: str + ':' + data.length + ',' + text
+                },
+                yAxis: {
+                    floor: 0,
+                    min: 0,
+                    title: {
+                        text: null
+                    },
+                    lineColor: color,
+                    plotLines: [{
+                        value: 0,
+                        width: 1,
+                        color: color
+                    }],
+                    labels: {
+                        formatter: function () {
+                            return this.value + unit
+                        }
+                    }
+                },
+                tooltip: {
+                    formatter: function () {
+                        return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' + this.y + unit;
+                    }
+                },
+                plotOptions: {
+                    area: {
+                        lineColor: color,
+                        fillColor: {
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                        },
+                            stops: [[0, color], [1, Highcharts.Color(color).setOpacity(0).get('rgba')]]
+                        },
+                        marker: {
+                            radius: 2
+                        },
+                        lineWidth: 1,
+                        states: {
+                            hover: {
+                                lineWidth: 1
+                            }
+                        },
+                        threshold: null
+                    }
+                },
+                series: [{
+                    type: 'area',
+                    name: str,
+                    data: data/*(function () {
+                        var data = [], time = (new Date()).getTime();
+                        for (var i = -1440; i <= 0; i += 1) {
+                            data.push([
+                                time + i * 60000,
+                                Math.random()
+                            ]);
+                        }
+                        return data;
+                     }())*/
+                }]
+            };
+            return template;
+        }
+
+    //]]>
+    </script>
+    <style>
+        .container {
+            height: 200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+<input id="ip" name="ip" type="hidden" th:value="${ip}"/>
+<input id="to" type="hidden" th:value="${to}"/>
+
+<div style=" height: 30px; border: solid 0px #e4e4e4; margin-bottom: 5px;">
+    <div id="date1" class="laydate-icon" style="width:150px;float:left;"></div>
+    &nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkeden" onchange="addMonitor('eden');"/>eden&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checksurvivor" onchange="addMonitor('survivor');"/>survivor&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkold" onchange="addMonitor('old');"/>old&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkperm" onchange="addMonitor('perm');"/>perm&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkyonggc" onchange="addMonitor('yonggc');"/>yonggc&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkoldgc" onchange="addMonitor('oldgc');"/>oldgc&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkcpu" onchange="addMonitor('cpu');"/>cpu&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkthread" onchange="addMonitor('thread');"/>thread&nbsp;&nbsp;
+    <input type="checkbox" name="checks" checked="checked" id="checkclazz" onchange="addMonitor('clazz');"/>clazz&nbsp;&nbsp;
+</div>
+<script type="text/javascript">
+//    laydate.skin('molv');//切换皮肤，请查看skins下面皮肤库
+    $('#date1').text(laydate.now());
+    //自定义日期格式
+    laydate({
+        elem: '#date1',
+        istoday: false, //是否显示今天
+        choose: function (datas) { //选择日期完毕的回调
+            draw(datas);
+        }
+    });
+</script>
+<div id="containereden" class="container"></div>
+<div id="containersurvivor" class="container"></div>
+<div id="containerold" class="container"></div>
+<div id="containerperm" class="container"></div>
+<div id="containeryonggc" class="container"></div>
+<div id="containeroldgc" class="container"></div>
+<div id="containercpu" class="container"></div>
+<div id="containerthread" class="container"></div>
+<div id="containerclazz" class="container"></div>
+</body>
+</html>

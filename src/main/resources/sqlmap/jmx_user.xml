@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.miaozhen.monitor.UserJmxDao">
+    <select id="getJmxurlByAppName" resultType="string">
+        SELECT jmx_url from jmx_manager WHERE application_name = #{appName}
+    </select>
+
+    <select id="queryUserJmxPage" resultMap="UserJmx" parameterType="com.miaozhen.monitor.UserJmx">
+    	SELECT * FROM jmx_manager where 1=1
+        <include refid="wheres"></include>
+    </select>
+    <select id="queryUserJmxCount" resultType="int" parameterType="com.miaozhen.monitor.UserJmx">
+    	SELECT count(id) FROM jmx_manager
+        <trim prefix="WHERE" prefixOverrides="AND|OR">
+            <include refid="wheres"></include>
+        </trim>
+    </select>
+    <sql id="wheres">
+        <if test="state != 1">
+            and state=#{state}
+        </if>
+        <if test="jmxUrl != null">
+            and jmx_url=#{jmxUrl}
+        </if>
+        <if test="serverName != null">
+            and servername=#{serverName}
+        </if>
+        <if test="applicationName != null and applicationName != ''">
+            and application_name=#{applicationName}
+        </if>
+        <if test="monitorIp != null and monitorIp!=''">
+            and back=#{monitorIp}
+        </if>
+        <if test="erp != null and erp!=''">
+            and erp=#{erp}
+        </if>
+    </sql>
+    <select id="quaryByServerName" resultMap="UserJmx" parameterType="string">
+        SELECT * from jmx_manager WHERE servername = #{serverName}
+    </select>
+
+    <select id="checkJmxUrlExists" resultType="string" parameterType="string">
+        SELECT application_name from jmx_manager WHERE jmx_url=#{jmxUrl}
+    </select>
+    
+    <select id="queryByJmxUrl" resultMap="UserJmx" parameterType="string">
+        SELECT * from jmx_manager WHERE jmx_url=#{jmxUrl}
+    </select>
+
+    <insert id="addJmx" parameterType="com.miaozhen.monitor.UserJmx" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO jmx_manager(erp,jmx_url,application_name,jmx_username,jmx_pwd,state,servername,back,back1,reconnNum)
+        VALUES (#{erp},#{jmxUrl},#{applicationName},#{jmxUsername},#{jmxPwd},#{state},#{serverName},#{monitorIp},#{monitorPort},#{reconnNum})
+    </insert>
+
+    <delete id="deleteJmx" parameterType="string">
+        DELETE FROM jmx_manager WHERE jmx_url=#{jmxUrl}
+    </delete>
+
+    <update id="updateJmx" parameterType="com.miaozhen.monitor.UserJmx">
+        UPDATE jmx_manager SET state = #{state},jmx_username = #{jmxUsername},jmx_pwd = #{jmxPwd} WHERE jmx_url = #{jmxUrl}
+    </update>
+    
+    <update id="updateAllJmx" parameterType="com.miaozhen.monitor.UserJmx">
+        UPDATE jmx_manager 
+        <set>
+        	<if test="serverName!=null and serverName!='' ">
+        		servername = #{serverName}, 
+        	</if>
+        	<if test="monitorIp!=null and monitorIp!='' ">
+        		back = #{monitorIp}, 
+        	</if>
+        	<if test="monitorPort!=null and monitorPort!='' ">
+        		back1 = #{monitorPort}, 
+        	</if>
+        </set>
+		 WHERE jmx_url = #{jmxUrl}
+    </update>
+
+    <update id="updateJmxDisconnectState" parameterType="string">
+        UPDATE jmx_manager SET state=-2 WHERE jmx_url = #{jmxUrl}
+    </update>
+    <update id="updateJmxConnectedState" parameterType="string">
+        UPDATE jmx_manager SET state=0 WHERE jmx_url = #{jmxUrl}
+    </update>
+    <resultMap id="UserJmx" type="com.miaozhen.monitor.UserJmx">
+        <id property="id" column="id"/>
+        <result property="erp" column="erp"/>
+        <result property="jmxUrl" column="jmx_url"/>
+        <result property="applicationName" column="application_name"/>
+        <result property="jmxUsername" column="jmx_username"/>
+        <result property="jmxPwd" column="jmx_pwd"/>
+        <result property="state" column="state"/>
+        <result property="createTime" column="time"/>
+        <result property="serverName" column="servername"/>
+        <result property="monitorIp" column="back"/>
+        <result property="monitorPort" column="back1"/>
+        <result property="reconnNum" column="reconnNum"/>
+    </resultMap>
+    <select id="getAppNames" resultType="string">
+        select application_name
+        from jmx_manager GROUP BY application_name
+        ORDER BY id DESC;
+   </select>
+    <select id="getMonitorIps" resultType="string">
+        SELECT serverName FROM jmx_manager ORDER BY id DESC;
+    </select>
+</mapper>

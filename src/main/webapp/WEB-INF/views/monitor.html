@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>monitor</title>
+    <script type="text/javascript" src="../../js/jquery-1.js"></script>
+    <script src="../../js/highcharts.js"></script>
+    <script type="text/javascript">
+        //<![CDATA[
+        $(function () {
+            $(document).ready(function () {
+                Highcharts.setOptions({
+                    global: {
+                        useUTC: false
+                    }
+                });
+                var data;
+                setInterval(function () {
+                    $.ajax({
+                        url: "/servlet/cachedData?key=lastGcInfo&ip=" + $('#ip').val() + '&to=' + $('#to').val(),
+                        type: "POST",
+                        data: {
+                            name: 1,
+                            kkk: "ok"
+                        },
+                        success: function (responseText) {
+                            data = eval("(" + responseText + ")");
+                        }
+                    });
+                }, 1000);
+
+                var resp = eval("(" + $("#shortHistory").val() + ")");
+                //模板
+                function getTemplate(str) {
+                    var color;
+                    var name1, name2;
+                    var index1, index2;
+                    var unit;
+                    if ('cpu' == str) {
+                        name1 = 'cpu使用';
+                        name2 = 'gc使用';
+                        color = Highcharts.getOptions().colors[4];
+                        unit = '%';
+                        index1 = 1;
+                        index2 = 2;
+                    } else if ('heap' == str) {
+                        name1 = '分配';
+                        name2 = '已使用';
+                        color = Highcharts.getOptions().colors[5];
+                        unit = 'M';
+                        index1 = 3;
+                        index2 = 4;
+                    } else if ('class' == str) {
+                        name1 = '已装入的总数';
+                        name2 = '已卸载的总数';
+                        color = Highcharts.getOptions().colors[6];
+                        unit = '个';
+                        index1 = 5;
+                        index2 = 6;
+                    } else if ('thread' == str) {
+                        name1 = '活动';
+                        name2 = '守护进程';
+                        color = Highcharts.getOptions().colors[7];
+                        unit = '个';
+                        index1 = 7;
+                        index2 = 8;
+                    }
+                    var data1 = [];
+                    var data2 = [];
+                    for (var i = 0; i < resp.length; i++) {
+                        data1.push({
+                            x: resp[i][0],
+                            y: resp[i][index1]
+                        });
+                        data2.push({
+                            x: resp[i][0],
+                            y: resp[i][index2]
+                        });
+                    }
+                    var template = {
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            zoomType: 'x',
+                            type: 'spline',
+                            animation: Highcharts.svg, // don't animate in old IE
+                            marginRight: 10,
+                            events: {
+                                load: function () {
+
+                                    // set up the updating of the chart each second
+                                    var series = this.series;
+                                    var chart = this;
+                                    setInterval(function () {
+                                        if (data != undefined) {
+                                            //获取当前运行时间
+                                            var x = data.time; // current time
+                                            var text;
+                                            if ('cpu' == str) {
+                                                text = ' ' + str + " 使用情况:" + data.cpuUsage + "%; " + "垃圾回收:" + data.gcUsage + "%";
+                                                series[0].addPoint([x, data.cpuUsage], true, true);
+                                                series[1].addPoint([x, data.gcUsage], true, true);
+                                            } else if ('heap' == str) {
+                                                text = ' ' + str + " 最大:" + data.heap.maxHeap + "M;分配:" + data.heap.heapCapacity
+                                                        + "M;已使用:" + data.heap.heapUsed + "M";
+                                                series[0].addPoint([x, data.heap.heapCapacity], true, true);
+                                                series[1].addPoint([x, data.heap.heapUsed], true, true);
+                                            } else if ('class' == str) {
+                                                text = ' ' + str + " 已装入的总数:" + data.clazz.totalLoaded + " 已卸载的总数:" + data.clazz.totalUnloaded;
+                                                series[0].addPoint([x, data.clazz.totalLoaded], true, true);
+                                                series[1].addPoint([x, data.clazz.totalUnloaded], true, true);
+                                            }
+                                            else if ('thread' == str) {
+                                                text = ' ' + str + " 活动:" + data.thread.totalThreads + " 守护进程:" + data.thread.daemonThreads
+                                                        + " 实时峰值:" + data.thread.peakThreads;
+                                                series[0].addPoint([x, data.thread.totalThreads], true, true);
+                                                series[1].addPoint([x, data.thread.daemonThreads], true, true);
+                                            }
+                                            chart.setTitle({
+                                                align: 'left',
+                                                text: text
+                                            });
+                                        }
+                                    }, 1000);
+                                }
+                            }
+                        },
+                        title: {
+                            text: str,
+                            style: {
+                                fontFamily: "微软雅黑Regular','微软雅黑",
+                                fontSize: '13px'
+                            }
+                        },
+                        xAxis: {
+                            type: 'datetime',
+                            tickPixelInterval: 150
+                        },
+                        yAxis: {
+                            min: 0,
+                            title: {
+                                text: null
+                            },
+                            lineColor: color,
+                            plotLines: [{
+                                value: 0,
+                                width: 1,
+                                color: color
+                            }],
+                            labels: {
+                                formatter: function () {
+                                    return this.value + unit
+                                }
+                            }
+                        },
+                        tooltip: {
+                            crosshairs: [
+                                {
+                                    width: 1,
+                                    color: '#e4e4e4'
+                                }
+                            ],
+                            formatter: function () {
+                                return '<b>' + this.series.name + '</b><br/>' +
+                                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                                        this.y + unit;
+                            }
+                        },
+                        series: [{
+                            name: name1,
+                            data: data1
+                        }, {
+                            name: name2,
+                            data: data2
+                        }]
+                    };
+                    return template;
+                }
+
+                $('#containerCpu').highcharts(getTemplate('cpu'));
+                $('#containerHeap').highcharts(getTemplate('heap'));
+                $('#containerClass').highcharts(getTemplate('class'));
+                $('#containerThread').highcharts(getTemplate('thread'));
+            });
+        });
+        //]]>
+    </script>
+</head>
+<body>
+
+<div>
+    <input id="ip" name="ip" type="hidden" th:value="${ip}"/>
+    <input id="to" type="hidden" th:value="${to}"/>
+    <input id="shortHistory" type="hidden" th:value="${shortHistory}"/>
+    <!-- 以下为图表区域 -->
+    <div id="chart_tab" style="border: solid 0px #E4E4E4;height: 800px;">
+        <div id="containerCpu"
+             style="float: left;width: 48%;border:solid 1px #E4E4E4; height: 340px; margin:1px;"></div>
+        <div id="containerHeap"
+             style="float: left;width: 48%;border:solid 1px #E4E4E4; height: 340px; margin: 1px"></div>
+        <div id="containerClass"
+             style="float: left;width: 48%;border:solid 1px #E4E4E4; height: 340px; margin: 1px"></div>
+        <div id="containerThread"
+             style="float: left;width: 48%;border:solid 1px #E4E4E4; height: 340px; margin: 1px"></div>
+    </div>
+</div>
+
+
+</body>
+</html>

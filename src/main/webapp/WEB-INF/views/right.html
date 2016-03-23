@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width , initial-scale=1"/>
+    <!-- 适当的绘制与缩放 -->
+    <title>overview</title>
+    <script type="text/javascript" src="../../js/jquery-1.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/device_jvm.css"/>
+    <script type="text/javascript">
+        //<![CDATA[
+        $(document).ready(function () {
+            $('#rightFrame').attr("src", "/view/overview?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+            $('#overview').attr("href", "/view/overview?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+            $('#monitor').attr("href", "/view/monitor?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+            $('#thread').attr("href", "/view/thread?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+            $('#visualGc').attr("href", "/view/visualGc?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+            $('#history').attr("href", "/view/history?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+            $('#dumpthread').attr("href", "/dumpthread?ip=" + $('#ip').val() + '&to=' + $('#to').val());
+        });
+        <!--选中按钮更改样式 -->
+        function setSelectorType(selectId) {
+            $('.selected').attr("class", "page_main");
+            $('#' + selectId).attr("class", "selected");
+        }
+        function executeGC(){
+        	var ip = $('#ip').val();
+        	var to = $('#to').val();
+        	if(ip == "" || to == ""){
+        		alert("信息错误,请选择被监控实例！");
+        	}else {
+        		//var r = confirm("此操作会对您的应用有一定的影响，您确定要执行垃圾回收操作吗？");
+        		//if(r){
+        			$.ajax({
+        				url: "/appgc",
+        				type: "POST",
+        				data: {
+        					ip: ip,
+        					to: to
+        				},
+        				success: function(data) {
+        					
+        				}
+        			});
+        		//}
+        	}
+        }
+        //]]>
+    </script>
+</head>
+
+<body>
+<input id="ip" type="hidden" th:value="${ip}"/>
+<input id="to" type="hidden" th:value="${to}"/>
+
+<div class="page_main"
+     style="weight: 100%; min-height: 100%; margin: 0 auto">
+    <div>
+        <nav>
+            主机名称<span class="split"> / </span><span th:text="${to}"></span>
+        </nav>
+    </div>
+    <!-- 用户选择区域 -->
+    <div class="user_selector">
+        <div class="item_bd" style="float: left; margin-top: 8px;margin-left: 10px;width:100%;">
+            <div class="item_bd_selecter" style="width:100%;">
+                <a id="overview" target="rightFrame" onclick="setSelectorType('overview')" href=""
+                   class="selected">概述</a>
+                <a id="monitor" target="rightFrame" onclick="setSelectorType('monitor')" href="">监视</a>
+                <a id="thread" target="rightFrame" onclick="setSelectorType('thread')" href="">线程</a>
+                <a id="visualGc" target="rightFrame" onclick="setSelectorType('visualGc')" href="">visualGc</a>
+                <a id="history" target="_blank" href="">历史</a>
+                <a id="dumpthread" target="_blank" href="">线程Dump</a>
+                <button id="executeGC" onclick="executeGC()">执行GC</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 图表区域 -->
+<div style="padding-top: 0px;">
+    <iframe id="rightFrame" style="overflow-y:scroll;overflow-x:hidden;" scrolling="yes" name="rightFrame"
+            width="100%" height="750px" frameborder="0">
+    </iframe>
+</div>
+</body>
+</html>

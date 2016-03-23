@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+    <meta charset="UTF-8"/>
+    <title>线程</title>
+    <link rel="stylesheet" href="../../css/jq.css" type="text/css" media="print, projection, screen"/>
+    <link rel="stylesheet" href="../../css/style.css" type="text/css" media="print, projection, screen"/>
+    <script src="../../js/jquery-1.js"></script>
+    <script src="../../js/highcharts.js"></script>
+    <script type="text/javascript">
+        //<![CDATA[
+        var monitorId = [];
+        var monitorNo = [];
+        var monitorName = [];
+        $(function () {
+                    $(".table-01").tablesorter();
+                    Highcharts.setOptions({
+                        global: {
+                            useUTC: false
+                        }
+                    });
+                    var resp = eval("(" + $("#threadJson").val() + ")");
+                    if (resp == null) return;
+                    var list = resp.list;
+                    var category=[0];
+                    for(var i=0;i<list.length;i++){
+                        category.push(list[list.length-i-1].id);
+                    }
+                    var data = [];
+                    for (var i = 0; i < list.length; i++) {
+                        var color = list[i].state == 1 ? '#3AE467' : list[i].state == 2 ? '#9B86DD' : list[i].state == 3 ? '#FFE45A' : list[i].state == 4 ? '#FF7266' : 'black';
+                        var y = {
+                            x: resp.time,
+                            y: list.length - i,
+                            marker: {
+                                fillColor: color,
+                                symbol: 'square'
+                            }
+                        };
+                        data.push({
+                            name: list[i].id + list[i].name,
+                            data: [y]
+                        });
+                    }
+                    var text = "<span style='color:#3AE467'>运行&nbsp;</span><span style='color:#9B86DD'>休眠&nbsp;</span>"
+                            + "<span style='color:#FFE45A'>等待&nbsp;</span><span style='color:#FF7266'>监视&nbsp;</span>";
+                    $('#container').attr("style", "height:" + (list.length * 21+85 ) + "px;");
+                    $('#container').highcharts({
+                        credits: {
+                            enabled: false
+                        },
+                        legend: {
+                            enabled: false
+                        },
+                        title: {
+                            useHTML: true,
+                            style: {"fontSize": "12px"},
+                            align: 'left',
+                            text: text
+                        },
+                        chart: {
+                            type: 'scatter',
+                            events: {
+                                load: function () {
+                                    var series = this.series;
+                                    setInterval(function () {//定时器异步请求数据
+                                        if (series.length > 0 && monitorName.length > 0) {
+                                            $.ajax({
+                                                url: "/servlet/cachedData?key=threadInfo&ip=" + $("#ip").val() + '&to=' + $('#to').val() + "&monitor=" + monitorId,
+                                                type: "POST",
+                                                data: {
+                                                    name: 1,
+                                                    kkk: "ok"
+                                                },
+                                                success: function (responseText) {
+                                                    var resp = eval("(" + responseText + ")");
+                                                    list = resp.list;
+                                                    for (var n = 0; n < monitorName.length; n++) {//循环监控列表
+                                                        if ((list[n].id + list[n].name) == (monitorId[n] + monitorName[n])) {
+                                                            var color = list[n].state == 1 ? '#3AE467' : list[n].state == 2 ? '#9B86DD' : list[n].state == 3 ? '#FFE45A' : list[n].state == 4 ? '#FF7266' : 'black';
+                                                            var id = list[n].id;
+                                                            $('#thread1' + id).text((list[n].s1 ));
+                                                            $('#thread2' + id).text((list[n].s2 ));
+                                                            $('#thread3' + id).text((list[n].s3 ));
+                                                            $('#thread4' + id).text((list[n].s4 ));
+                                                            var y = {
+                                                                x: resp.time,
+                                                                y: series.length-monitorNo[n],
+                                                                marker: {
+                                                                    fillColor: color,
+                                                                    symbol: 'square'
+                                                                }
+                                                            };
+                                                            series[monitorNo[n]].addPoint(y);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }, 2000);
+                                }
+                            }
+                        },
+                        xAxis: {
+                            type: 'datetime',
+                            tickPixelInterval: 150
+                        },
+                        yAxis: {
+                            categories:category,
+                            tickLength:20,
+                            title: null
+                        },
+                        tooltip: {
+                            formatter: function () {
+                                return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>';
+                            }
+                        },
+                        plotOptions: {
+                            spline: {
+                                marker: {
+                                    radius: 4,
+                                    lineColor: '#666666',
+                                    lineWidth: 1
+                                }
+                            }
+                        },
+                        series: data
+                    });
+                }
+        );
+
+        function addMonitor() {
+            var data1 = [];
+            var data2 = [];
+            var data3 = [];
+            $(":checkbox:checked").each(function () {
+                var values = $(this).val().split(',');//seriesId，id，name
+                data1.push(parseInt(values[0]));
+                data2.push(parseInt(values[1]));
+                data3.push(values[2]);
+            })
+            monitorNo = data1;
+            monitorId = data2;
+            monitorName = data3;
+        }
+
+        //]]>
+    </script>
+    <script type="text/javascript" src="../../js/jquery.tablesorter.js"></script>
+</head>
+<body>
+<input id="ip" name="ip" type="hidden" th:value="${ip}"/>
+<input id="to" type="hidden" th:value="${to}"/>
+<input id="threadJson" type="hidden" th:value="${threadJson}"/>
+<div id="containerLeft"
+     style="width: 29%; min-height: 700px; margin-right:2px;float: left;border:solid 0px #e4e4e4;overflow:hidden;white-space:nowrap;">
+    线程数：<label th:text="${threadList.size()}"></label>
+    <table cellspacing="1" class="tablesorter table-01">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>选</th>
+                    <th>运行(s)</th>
+                    <th>休眠(s)</th>
+                    <th>等待(s)</th>
+                    <th>监视(s)</th>
+                    <th>名称</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="thread,stat : ${threadList}">
+                    <td th:text="${thread.id}">Onions</td>
+                    <td><input type="checkbox" name="checkThread" onclick="addMonitor()"
+                               th:value="${stat.index}+','+${thread.id}+','+${thread.name}"/></td>
+                    <td th:id="'thread1'+${thread.id}" th:text="${thread.s1}"></td>
+                    <td th:id="'thread2'+${thread.id}" th:text="${thread.s2}"></td>
+                    <td th:id="'thread3'+${thread.id}" th:text="${thread.s3}"></td>
+                    <td th:id="'thread4'+${thread.id}" th:text="${thread.s4}"></td>
+                    <td th:text="${thread.name}"></td>
+                </tr>
+                </tbody>
+            </table>
+</div>
+<div id="containerRight" style="float: left;width: 69%;border:solid 1px #e4e4e4;">
+    <div id="container" style="width:98%;min-height:2000px;"></div>
+</div>
+</body>
+</html>

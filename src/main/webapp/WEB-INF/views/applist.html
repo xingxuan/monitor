@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Jvm监控平台</title>
+    <!-- 新 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="../../css/bootstrap.css"/>
+    <link rel="stylesheet" href="../../css/dashboard.css"/>
+    <script src="../../js/jquery-1.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/paging.js"></script>
+    <style type="text/css">
+    .container {
+		width:100%;
+		background-color:#ddd;
+	}
+    </style>
+    <script>
+    	function openApp(ele){
+    		var connstr = $(ele).attr("data-str");
+    		$.ajax({
+    			url: "/appopen",
+    			type: "POST",
+    			data: {
+    				connstr:""+connstr
+    			},
+    			success: function(data) {
+    				if(data.msg==1){
+    					alert("此应用正被监控,无须启动!");
+    				}else if(data.msg==-1){
+    					alert("此应用启动失败!");
+    				}else if(data.msg==0){
+    					alert("此应用开始创建连接，请等待!");
+    				}else {
+    					alert("此应用jmx连接断开!");
+    				}
+    			}
+    		});
+    	}
+    function delApp(to,applicationName,connstr){
+		var r = confirm("您确定要删除此监控吗？");
+		if(r){
+			$.ajax({
+				url: "/appdel",
+				type: "POST",
+				data: {
+					ip: connstr,
+					app: applicationName,
+					to: to
+				},
+				success: function(data) {
+					if(data.msg==0){
+						alert("此应用监控已经被移除!");
+					}else {
+						alert("删除失败!");
+					}
+					location.reload();
+				}
+			});
+		}
+	}
+    </script>
+</head>
+<body style="padding-top: 1px;">
+
+<div id="applist">
+	<div id="search" class="container">
+	  <input style="float:left;height:30px; text-align: left;margin-top:2px;margin-right:10px;" id="jmxUrl" size="30" />
+	  <button style="float:left;" onclick="search();" class="btn btn-info btn-sm">查找</button>
+	</div>
+	<table class="table">
+	  <thead>
+	    <tr>
+	    	<td width="200px;">监控机名</td>
+	    	<td width="200px;">监控机IP</td>
+	    	<td width="200px;">监控机PORT</td>
+	    	<td width="200px;">被监控应用JMX端口</td>
+	    	<td width="200px;">被监控应用名称</td>
+	    	<td width="200px;">监控状态</td>
+	    	<td width="200px;">添加人ERP</td>
+	    	<td width="200px;">操作</td>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <tr th:each="app : ${appSets}">
+	      <td th:text="${app.serverName}">监控机名</td>
+	      <td th:text="${app.monitorIp}">监控机IP</td>
+	      <td th:text="${app.monitorPort}">监控机port</td>
+	      <td th:text="${app.jmxUrl}">被监控应用</td>
+	      <td th:text="${app.applicationName}">被监控应用名称</td>
+	      <td th:text="${app.state}">状态</td>
+	      <td th:text="${app.erp}">添加人ERP</td>
+	      <td>
+			  <a href="#" th:attr="data-str=${app.jmxUrl}" onclick="openApp(this)">启动</a>
+			  | <a href="#" th:attr="onclick='delApp(\''+${app.to}+'\',\''+${app.applicationName}+'\',\''+${app.jmxUrl}+'\')'">删除</a>
+	      </td>
+	    </tr>
+	  </tbody>
+	</table>
+	<div id="pagingDiv" style="float:right;position:absoult;margin-right:25px;margin-bottom:10px;">
+		<input type="hidden" id="pageNum" value="1"></input>
+		<nav>
+			<ul style="margin-top:10px;"  class="pagination">
+			<div style="float:left;width:80px;margin-top:7px;margin-left:10px;">总共<span id="totalRows" th:text="${appNum}"></span>条</div>
+				<li><a style="margin-left:1px;margin-right:1px;" onclick="getPrePage();" href="#">上一页</a></li>
+				
+				<li id="nextPage"><a style="margin-left:10px;margin-right:1px;" onclick="getNextPage();"  href="#">下一页</a></li>
+				<div style="float:left;width:45px;margin-top:7px;margin-left:10px;">跳转到</div>
+				<input style="float:left;height:30px; text-align: center;margin-top:2px;margin-left:10px;" id="gotoPageNum" value="1" size="1" />
+				<div style="float:left;width:20px;margin-top:7px;margin-left:10px;">页</div>
+				<button style="float:left;" onclick="getOneBindPage();" class="btn btn-default btn-sm">
+					确定
+				</button>
+			</ul>
+		</nav>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width , initial-scale=1"/>
+    <!-- 适当的绘制与缩放 -->
+    <title>overview</title>
+    <script type="text/javascript" src="../../js/jquery-1.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/device_jvm.css"/>
+    <script type="text/javascript">
+        //<![CDATA[
+
+        $(document).ready(function () {
+            startRequest();
+        });
+        function setTab(name, cursel, n) {
+            for (var i = 1; i <= n; i++) {
+                var menu = document.getElementById(name + i);
+                var con = document.getElementById("con_" + name + "_" + i);
+                menu.className = i == cursel ? "hover" : "";
+                con.style.display = i == cursel ? "block" : "none";
+            }
+        }
+        function startRequest() {
+            $.ajax({
+                url: "/servlet/cachedData?key=overview&ip=" + $("#ip").val() + '&to=' + $('#to').val(),
+                type: "POST",
+                data: {
+                    name: 1,
+                    kkk: "ok"
+                },
+                success: function (responseText) {
+                    var data = eval("(" + responseText + ")");
+                    //属性赋值
+                    $("#title_pid").html(data.pid);
+                    $("#title_hostName").html(data.hostName);
+                    $("#title_mainClass").html(data.mainClass);
+                    $("#title_mainArgs").html(data.mainArgs);
+                    $("#title_vmId").html(data.vmId);
+                    $("#title_version").html(data.javaVersion);
+                    $("#title_Vendor").html(data.javaVendor);
+                    $("#title_javaHome").html(data.javaHome);
+                    $("#title_jvmFlags").html(data.jvmFlags);
+                    $("#jvmArgs").html(data.jvmArgs);
+                    $("#systemProperties").html(data.systemProperties);
+                }
+            });
+        }
+        //]]>
+    </script>
+</head>
+
+<body>
+<input id="ip" type="hidden" th:value="${ip}"/>
+<input id="to" type="hidden" th:value="${to}"/>
+
+<!-- 图表区域 -->
+<div style="padding-top: 0px">
+
+<div style="border: 0px solid #e4e4e4; width: 100%;margin-bottom:10px;font-size:11px;font-family: '微软雅黑regular','微软雅黑';">
+        <p>
+            <span class="overview_title">Pid:</span> <span id="title_pid"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">主机:</span> <span id="title_hostName"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">主类:</span> <span id="title_mainClass"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">参数:</span> <span id="title_mainArgs"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">JVM:</span> <span id="title_vmId"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">Java:</span> <span id="title_version"></span>&nbsp;<span
+                id="title_Vendor"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">Java Home 目录:</span> <span id="title_javaHome"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">Jvm标志:</span> <span id="title_jvmFlags"></span>
+        </p>
+
+        <p>
+            <span class="overview_title">出现OOME&nbsp;生成堆&nbsp;dump:</span> <span>&lt;无&gt;</span>
+        </p>
+    </div>
+    <!-- <div style="border:1px solid #e4e4e4;width:100%;height:100%;"> -->
+    <div id="chart_tab">
+        <div id="lib_Tab1">
+            <div class="lib_Menubox lib_tabborder">
+                <ul>
+                    <li id="one1" onmouseover="setTab('one',1,2)" class="hover">jvm参数</li>
+                    <li id="one2" onmouseover="setTab('one',2,2)">系统配置</li>
+                </ul>
+            </div>
+            <div class="lib_Contentbox lib_tabborder">
+                <div id="con_one_1">
+                    <div id="jvmArgs"></div>
+                </div>
+                <div id="con_one_2" style="display: none">
+                    <div id="systemProperties"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

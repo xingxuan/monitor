@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>visualGc</title>
+    <script src="../../js/jquery-1.js"></script>
+    <script src="../../js/highcharts.js"></script>
+    <script type="text/javascript">
+        //<![CDATA[
+        $(document).ready(function () {
+            Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });
+            var memory;
+            setInterval(function () {
+                $.ajax({    //异步请求数据
+                    url: "/servlet/cachedData?key=lastGcInfo&ip=" + $("#ip").val() + '&to=' + $('#to').val(),
+                    type: "POST",
+                    data: {
+                        name: 1,
+                        kkk: "ok"
+                    },
+                    success: function (responseText) {
+                        memory = eval("(" + responseText + ")")
+                    }
+                });
+            }, 1000);
+            // Memory
+            $('#containerSpaces').highcharts({
+                credits: {
+                    enabled: false
+                },
+                legend: {
+                    enabled: false
+                },
+                tooltip: {
+                    enabled: false
+                },
+                title: {
+                    text: 'Spaces'
+                },
+                chart: {
+                    type: 'column',
+                    events: {
+                        load: function () {
+                            var series = this.series[0];
+                            setInterval(function () {
+                                series.setData([memory.eden.percent, memory.survivor.percent, memory.old.percent, memory.perm.percent]);
+                            }, 1000);
+                        }
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    categories: ['eden', 'survivor', 'old', 'perm']
+                },
+                yAxis: {
+                    floor: 0,
+                    max: 100,
+                    title: {
+                        text: null
+                    },
+                    labels: {
+                        formatter: function () {
+                            return this.value + '%'
+                        }
+                    }
+                },
+                plotOptions: {
+                    series: {
+                        borderWidth: 0,
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.y:.2f}%'
+                        }
+                    }
+                },
+                series: [{
+                    name: null,
+                    colorByPoint: true,
+                    data: [0, 0, 0, 0]
+                }]
+            });
+            var resp = eval("(" + $("#shortHistory").val() + ")");
+            function getTemplate(str) {
+                //设置颜色
+                var index;
+                var color;
+                if ('eden' == str) {
+                    color = Highcharts.getOptions().colors[0];
+                    index = 9;
+                } else if ('survivor' == str) {
+                    color = Highcharts.getOptions().colors[1];
+                    index = 10;
+                } else if ('old' == str) {
+                    color = Highcharts.getOptions().colors[2];
+                    index = 11;
+                } else if ('perm' == str) {
+                    color = Highcharts.getOptions().colors[3];
+                    index = 12;
+                }
+                var data = [];
+                for (var i = 0; i < resp.length; i++) {
+                        data.push({
+                            x: resp[i][0],
+                            y: resp[i][index]
+                        });
+                    }
+
+                //设置模板
+                var template = {
+                    credits: {
+                        enabled: false
+                    },
+                    exporting: {
+                        enabled: false
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    chart: {
+                        zoomType: 'x',
+                        type: 'spline',
+                        animation: Highcharts.svg,
+                        marginRight: 10,
+                        events: {
+                            load: function () {
+                                var series = this.series[0];
+                                var chart = this;
+                                setInterval(function () {
+                                            var graphs = ('运行时长：' + memory.uptime + '<br/>')
+                                                    + ('JIT编译时间：共' + memory.compile.totalCompilationTime / 1000.0 + 's<br/>')
+                                                    + ('类加载：共' + memory.clazz.totalLoaded + '加载，' + memory.clazz.totalUnloaded + '卸载<br/>')
+                                                    + ('GC：共' + memory.gctime.collectionCount + '项收集，用时:' + memory.gctime.collectionTime / 1000.0 + 's<br/>');
+                                            $('#graphs').html(graphs);
+                                            var point;
+                                            var text;
+                                            if ('eden' == str) {
+                                                point = [memory.time, memory.eden.used];
+                                                text = '  ' + str + ' 最大值:' + memory.eden.max + "M,分配:" + memory.eden.committed + "M,已使用:" + memory.eden.used + 'M'
+                                                        + ',GC算法:' + memory.gcname.yongGcName + ',' + memory.eden.yongGcCount + '项收集,用时:' + memory.eden.yongGcTime / 1000.0 + 's';
+                                            } else if ('survivor' == str) {
+                                                point = [memory.time, memory.survivor.used];
+                                                text = '  ' + str + ' 最大值:' + memory.survivor.max + "M,分配:" + memory.survivor.committed + "M,已使用:" + memory.survivor.used + 'M'
+                                            } else if ('old' == str) {
+                                                point = [memory.time, memory.old.used];
+                                                text = '  ' + str + ' 最大值:' + memory.old.max + "M,分配:" + memory.old.committed + "M,已使用:" + memory.old.used + 'M'
+                                                        + ',GC算法:' + memory.gcname.oldGcName + ',' + memory.old.oldGcCount + '项收集,用时:' + memory.old.oldGcTime / 1000.0 + 's';
+                                            } else if ('perm' == str) {
+                                                point = [memory.time, memory.perm.used];
+                                                text = '  ' + str + ' 最大值:' + memory.perm.max + "M,分配:" + memory.perm.committed + "M,已使用:" + memory.perm.used + 'M'
+                                            }
+                                            series.addPoint(point, true, true);
+                                            chart.setTitle({
+                                                align: 'left',
+                                                style: {"fontSize": "12px"},
+                                                text: text
+                                            });
+                                        },
+                                        1000);
+                            }
+                        }
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        tickPixelInterval: 100
+                    },
+                    title: {
+                        text: str
+                    },
+                    yAxis: {
+                        floor: 0,
+                        min: 0,
+                        title: {
+                            text: null
+                        },
+                        lineColor: color,
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: color
+                        }],
+                        labels: {
+                            formatter: function () {
+                                return this.value + 'M'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        formatter: function () {
+                            return '<b>' + this.series.name + ' used</b><br/>' + Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' + this.y + 'M';
+                        }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    plotOptions: {
+                        area: {
+                            lineColor: color,
+                            fillColor: {
+                                linearGradient: {
+                                    x1: 0,
+                                    y1: 0,
+                                    x2: 0,
+                                    y2: 1
+                                },
+                                stops: [[0, color], [1, Highcharts.Color(color).setOpacity(0).get('rgba')]]
+                            },
+                            marker: {
+                                radius: 2
+                            },
+                            lineWidth: 1,
+                            states: {
+                                hover: {
+                                    lineWidth: 1
+                                }
+                            },
+                            threshold: null
+                        }
+                    },
+
+                    series: [{
+                        type: 'area',
+                        name: str,
+                        data: data
+                    }]
+                };
+                return template;
+            }
+
+            $('#containereden').highcharts(getTemplate('eden'));
+            $('#containersurvivor').highcharts(getTemplate('survivor'));
+            $('#containerold').highcharts(getTemplate('old'));
+            $('#containerperm').highcharts(getTemplate('perm'));
+        });
+        //]]>
+    </script>
+</head>
+<body>
+<!--<div>visualGc</div>
+<div th:text="${ip}"></div>-->
+<input id="ip" name="ip" type="hidden" th:value="${ip}"/>
+<input id="to" type="hidden" th:value="${to}"/>
+<input id="shortHistory" type="hidden" th:value="${shortHistory}"/>
+<div id="containerSpaces"
+     style="width: 28%; height: 700px; margin-right:2px;float: left;border:solid 1px #e4e4e4;"></div>
+<div id="containerGraphs" style="float: left;width: 68%;height: 700px;border:solid 1px #e4e4e4;">
+    <div align="center">
+        <strong>Graphs</strong>
+    </div>
+    <div id="graphs" style="font-size: 12px;margin: 5px"></div>
+    <div id="containereden" style=" height: 150px; margin: 0 auto"></div>
+    <div id="containersurvivor" style=" height: 150px; margin: 0 auto"></div>
+    <div id="containerold" style=" height: 150px; margin: 0 auto"></div>
+    <div id="containerperm" style=" height: 150px; margin: 0 auto"></div>
+</div>
+</body>
+</html>

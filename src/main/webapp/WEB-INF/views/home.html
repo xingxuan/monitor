@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jvm监控平台</title>
+	<script src="../../js/jquery-1.js"></script>
+	<script src="../../js/utils.js"></script>
+	<link rel="stylesheet" href="../../css/bootstrap.css"/>
+	<link rel="stylesheet" href="../../css/dashboard.css"/>
+	<script src="../../js/bootstrap.min.js"></script>
+	<script src="../../js/menu_min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../css/base.css"/>
+	<link rel="stylesheet" type="text/css" href="../../css/menu.css"/>
+	<script type="text/javascript" src="../../js/jquery.contextmenu.r2.js"></script>
+
+	<style>
+.headfont {
+	font-family: '微软雅黑 Regular', '微软雅黑';
+	font-weight: 400;
+	font-style: normal;
+	font-size: 15px;
+	color: #5E5E5E;
+}
+
+.active {
+	background-color: #FFFFFF;
+}
+
+.topRight {
+	font-size: 13px;
+	margin-right: 10px;
+	color: #FFFFFF;
+}
+.page_row {
+	margin-right: 5px;
+	margin-left: 0px;
+	margin-top: 1px;
+}
+</style>
+
+<script type="text/javascript">
+	//<![CDATA[
+	$(document).ready(function() {
+		$('.demo1').contextMenu('myMenu1', {
+			bindings: {
+				'save': function (t) {
+					document.getElementById('application_name').value = t.text;
+					document.getElementById('aaddJmx').click();
+				}
+			}
+		});
+		$('.demo2').contextMenu('myMenu2', {
+			bindings: {
+				'delete': function (t) {
+					$.ajax({
+						url: '/appdel?ip=' + t.name + '&to=' + t.text + '&app=' + t.parentNode.parentNode.id,
+						type: "get",
+						success: function (data) {
+							window.location.reload(true);
+						}
+					});
+				}
+			}
+		});
+
+		$(".menu ul li").menu();
+		$('#myModal').modal({
+			keyboard : true,
+			show : false
+		})
+		$('#close').bind("click", jmxUrlReset)
+
+	});
+
+	function jump(object) {
+		var name = object.innerHTML;
+		$("#subFrame").attr("src", '/view/right?ip=' + object.name + '&to=' + name);
+	}
+
+	function jmxUrlReset() {
+		$("#jmx_url").val("");
+		$("#application_name").val("");
+	}
+
+	//添加链接
+	function subForm() {
+		var v = $("#jmx_url").val();
+		var strips = v.split(",");
+		var sn = $("#server_name").val();
+		var serNames = sn.split(",");
+		if (strips.length > 50) {
+			alert("单次最多50条");
+			return false;
+		}
+		
+		if(strips.length != serNames.length){
+			alert("监控机名称与监控url个数不对应");
+			return false;
+		}
+		
+		for (var i = 0; i < strips.length; i++) {
+			if (!isIPAndPort(strips[i])) {
+				alert('"' + strips[i] + '"格式不正确,非ip:端口');
+				return false;
+			}
+		}
+
+		$.ajax({
+			url: "/addjmx",
+			type:"POST",
+			data: $("#submitjmx").serialize(),
+			success: function(data) {
+				if (data.msg != null) {
+					alert(data.msg);
+					window.location.reload(true);
+				} else {
+					window.location.reload(true);
+				}
+			}
+		});
+		return false;
+	}
+	
+	//]]>
+</script>
+</head>
+<body>
+<!--顶部横栏-->
+	<div>
+		<!-- <input id="getusername" name="erp" type="hidden" th:value="${logincxt.pin}"/> -->
+		<nav style="background-color: #5E5E5E; border-color: #5E5E5E; border-radius: 0px;">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand headfont" style="color: #FFFFFF; margin-right: 25px; margin-left: 20px;">
+						JVM监控调试平台 </a>
+				</div>
+				<!-- <div class="navbar-header" style="float: right; margin-right: 0px;">
+					<a class="navbar-brand headfont topRight" target="_blank"
+					   href="">意见建议</a>
+					<a class="navbar-brand headfont topRight" target="_blank"
+					   href="">使用文档</a>
+					<a class="navbar-brand headfont" style="font-size: 13px; color: #FFFFFF; margin-right: 10px;"
+					   th:text="'欢迎;'+${logincxt.pin}"></a>
+					<a class="navbar-brand headfont"
+					   style="font-size: 13px; float: right; margin-right: 10px; color: #FFFFFF;" href="logout">退出</a>
+				</div> -->
+			</div>
+		</nav>
+	</div>
+	<!--  左侧导航 -->
+	<div class="page_row">
+		<div class="menu">
+			<ul>
+				<li th:each="map,stat : ${listMapList}">
+					<a class="active demo1" href="#" th:text="${map['name']}"></a>
+					<ul style="display: block;" th:id="${map['name']}">
+						<li th:each="map2,stat : ${map['list']}">
+                            <a class="demo2" href="#" th:name="${map2['ip']}" th:text="${map2['to']}"
+							   onclick="jump(this)"></a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+		<!-- 右侧 -->
+		<div style="width: 90%; height: 850px; border: solid 1px #e4e4e4; float: right;">
+			<iframe id="subFrame" name="subFrame" src="/view/right" scrolling="no"
+					style="width: 100%; height: 100%; " frameborder="0"></iframe>
+		</div>
+		<!--弹出的添加对话框-->
+		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+			 aria-hidden="true">
+			<div class="modal-dialog" style="margin-top: 50px">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-hidden="true">×</button>
+						<p class="modal-title" id="myModalLabel"
+							style="float: left; font-size: 15px; margin: -5px;">添加jmx链接</p>
+					</div>
+					<form id="submitjmx" action="/addjmx" method="post">
+					<!-- 获取当前登录ERP账号提交至表单 -->
+						<!-- <input name="erp" type="hidden" th:value="${logincxt.pin}"/> -->
+						<div class="modal-body" style="font-size: 12px">
+							<div style="margin-left: 15px ;margin-bottom: 10px;">
+								<div style="margin-bottom: 10px; width: 100px; float: left">应用名称:</div>
+								<div>
+									<input id="application_name" name="applicationName"
+										   type="text" placeholder="所属应用名称" style="width: 350px"/>
+								</div>
+							</div>
+							<!--<div style="margin-left: 15px ;margin-bottom: 10px;">-->
+								<!--<div style="margin-bottom: 10px; width: 100px; float: left">jmx账号:</div>-->
+								<!--<div>-->
+									<!--<input id="jmx_username" name="jmxUsername"-->
+										   <!--type="text" placeholder="jmx账号" style="width: 350px"/>-->
+								<!--</div>-->
+							<!--</div>-->
+							<!--<div style="margin-left: 15px ;margin-bottom: 10px;">-->
+								<!--<div style="margin-bottom: 10px; width: 100px; float: left">jmx密码:</div>-->
+								<!--<div>-->
+									<!--<input id="jmx_pwd" name="jmxPwd"-->
+										   <!--type="password" placeholder="jmx密码" style="width: 350px"/>-->
+								<!--</div>-->
+							<!--</div>-->
+							
+							<div style="margin-left: 15px ;margin-bottom: 10px;">
+								<div style="margin-bottom: 10px; width: 100px; float: left">监控机名称:</div>
+								<div>
+									<input id="server_name" name="serverName"
+										   type="text" placeholder="监控机名称1,监控机名称2,监控机名称3" style="width: 350px"/>
+								</div>
+							</div>
+							<div style="margin-left: 15px ;margin-bottom: 10px;">
+								<div style="margin-bottom: 10px; width: 100px; float: left">链接:</div>
+								<div>
+									<input id="jmx_url" name="jmxUrl" type="text"
+										   placeholder="输入格式：ip1:端口,ip2:端口,ip3:端口" style="width: 350px"/>
+								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button id="close" type="button" class="btn btn-default"
+								data-dismiss="modal">关闭</button>
+							<button id="submit" type="submit" class="btn btn-primary"
+								onclick="return subForm()" data-dismiss="modal">确定</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<!--右键菜单-->
+		<div class="contextMenu" id="myMenu1">
+			<ul>
+				<li id="save"><a id="aaddJmx" data-toggle="modal" href="#myModal"><img src="../../img/disk.png"/>添加Jmx链接</a>
+				</li>
+			</ul>
+		</div>
+		<div class="contextMenu" id="myMenu2">
+			<ul>
+				<li id="delete"><img src="../../img/cross.png"/>删除Jmx链接</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>

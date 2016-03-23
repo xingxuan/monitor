@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="DEBUG">
+	<Appenders>
+	 	<Console name="Console">
+            <PatternLayout pattern="[%-5p %d{yyyy-MM-dd HH:mm:ss,SSS}] [THREAD:%t] %c(%L):%m%n"/>
+        </Console>
+        <RollingFile name="DebugRollingFile" fileName="${logpath}/jvm_root.log" filePattern="${logpath}/jvm_roo_-%d{yyyyMMddHHmmss}.log">
+            <PatternLayout pattern="[%-5p %d{yyyy-MM-dd HH:mm:ss,SSS}] [THREAD:%t] %c(%L):%m%n"/>
+            <BufferedIO value="true"/>
+            <BufferSize value="10240"/>
+            <SizeBasedTriggeringPolicy size="1024MB"/>
+            <ThresholdFilter level="DEBUG" />
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="${loglevel}">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="DebugRollingFile"/>
+        </Root>
+        <logger name="org.thymeleaf" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="DebugRollingFile"/>
+        </logger>
+        <logger name="org.apache" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="DebugRollingFile"/>
+        </logger>
+        <logger name="org.springframework" level="ERROR" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="DebugRollingFile"/>
+        </logger>
+    </Loggers>
+</Configuration>
