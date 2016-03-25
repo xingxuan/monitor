@@ -33,9 +33,9 @@ public class HomeController {
 		modelAndView.setViewName("home");
 		List<String> appNames = userJmxDao.getAppNames();
 		List<Map<String, Object>> rtnList = new ArrayList<Map<String, Object>>();
-		Map<String, Object> map3 = new HashMap<String, Object>();
 		if (CollectionUtils.isEmpty(appNames)) {
-			map3.put("name", "");
+            Map<String, Object> map3 = new HashMap<String, Object>();
+            map3.put("name", "");
 			map3.put("list", new ArrayList<Map<String, String>>());
 			rtnList.add(map3);
 			modelAndView.addObject("listMapList", rtnList);
@@ -43,6 +43,7 @@ public class HomeController {
 		}
 
 		for (String appName : appNames) {
+            Map<String, Object> map3 = new HashMap<String, Object>();
 			map3.put("name", appName);
 			List<Map<String, String>> mapList = new ArrayList<Map<String, String>>();
 			UserJmx param = new UserJmx();
@@ -55,8 +56,8 @@ public class HomeController {
 				mapList.add(map);
 			}
 			map3.put("list", mapList);
+            rtnList.add(map3);
 		}
-		rtnList.add(map3);
 		modelAndView.addObject("listMapList", rtnList);
 		return modelAndView;
 	}
