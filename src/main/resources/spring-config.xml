@@ -6,8 +6,8 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"
        default-autowire="byName">
        
-	<context:property-placeholder location="classpath:authen.properties" ignore-unresolvable="true"/>
-    <context:component-scan base-package="com.miaozhen.device"/>
+	<context:property-placeholder location="classpath:config.properties" ignore-unresolvable="true"/>
+    <context:component-scan base-package="cn.thextrader.monitor" />
     <context:annotation-config/>
     <!-- 调度业务 -->
     <aop:config proxy-target-class="true"/>
@@ -27,13 +27,13 @@
       <constructor-arg index="2" value="${redis.server.port}" type="int"/>
     </bean>
 
-    <bean id="springContextUtils" class="com.miaozhen.monitor.SpringContextUtils" />
+    <bean id="springContextUtils" class="cn.thextrader.monitor.SpringContextUtils" />
 
-    <bean id="jmxConnectionHandler" class="com.miaozhen.device.tools.vm.jmx.impl.JmxConnectionHandler"  init-method="start" >
+    <bean id="jmxConnectionHandler" class="cn.thextrader.device.tools.vm.jmx.impl.JmxConnectionHandler"  init-method="start" >
     	<property name="userJmxDao" ref="userJmxDao" />
     </bean>
 
-	<bean id="jvmdebugConstant" class="com.miaozhen.monitor.Constant" init-method="validate">
+	<bean id="jvmdebugConstant" class="cn.thextrader.monitor.Constant" init-method="validate">
 		<property name="CACHESTORETIME" value="${cache.data.storetime}" />
 		<property name="PREFIX" value="${cache.data.prefix}" />
 	</bean>

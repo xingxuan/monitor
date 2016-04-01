@@ -21,7 +21,22 @@
 			<artifactId>guava</artifactId>
 			<version>19.0</version>
 		</dependency>
-
+		<!-- zk客户端 -->
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-recipes</artifactId>
+			<version>2.8.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
@@ -126,15 +141,6 @@
 			<version>2.8.0</version>
 		</dependency>
 
-		<dependency>
-			<groupId>com.db4o</groupId>
-			<artifactId>db4o-full-java5</artifactId>
-			<version>8.0-SNAPSHOT</version> <!-- latest version -->
-			<scope>system</scope>
-			<systemPath>${basedir}/src/main/webapp/WEB-INF/lib/db4o-8.0.249.16098-all-java5.jar</systemPath>
-		</dependency>
-
-
 		<!--datasource 配置 -->
 		<dependency>
 			<groupId>mysql</groupId>
@@ -160,13 +166,13 @@
 			<artifactId>mybatis-spring</artifactId>
 			<version>1.2.0</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-tx</artifactId>
@@ -247,7 +253,8 @@
 				<!--log -->
 				<logpath>d:/Logs</logpath>
 				<loglevel>debug</loglevel>
-				<dbFile>d:/dataFile.db4o</dbFile>
+                <mvn.zk.url>192.168.2.62:2181</mvn.zk.url>
+                <mvn.base.path></mvn.base.path>
 
 				<!--数据库 -->
 				<serverside.jdbc.datasource.type>dbcp</serverside.jdbc.datasource.type>
@@ -271,7 +278,8 @@
 				<!--log -->
 				<logpath>/home/supertool/jiangzhixiong/Logs</logpath>
 				<loglevel>debug</loglevel>
-				<dbFile>/home/supertool/jiangzhixiong/data/dataFile.db4o</dbFile>
+                <mvn.zk.url>192.168.2.62:2181</mvn.zk.url>
+                <mvn.base.path></mvn.base.path>
 
 				<!--数据库 -->
 				<serverside.jdbc.datasource.type>dbcp</serverside.jdbc.datasource.type>
@@ -295,7 +303,8 @@
 
 				<logpath>/home/supertool/jiangzhixiong/Logs</logpath>
 				<loglevel>info</loglevel>
-				<dbFile>/home/supertool/jiangzhixiong/data/dataFile.db4o</dbFile>
+                <mvn.zk.url>192.168.2.62:2181</mvn.zk.url>
+                <mvn.base.path></mvn.base.path>
 
 				<!--数据库 -->
 				<serverside.jdbc.datasource.type>dbcp</serverside.jdbc.datasource.type>

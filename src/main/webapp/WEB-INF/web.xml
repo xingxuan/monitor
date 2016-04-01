@@ -22,7 +22,7 @@
     <!-- 字符集 过滤器  -->
     <filter>
         <filter-name>CharacterEncodingFilter</filter-name>
-        <filter-class>com.miaozhen.monitor.CharacterEncodingFilter</filter-class>
+        <filter-class>cn.thextrader.monitor.CharacterEncodingFilter</filter-class>
     </filter>
     <filter-mapping>
         <filter-name>CharacterEncodingFilter</filter-name>
