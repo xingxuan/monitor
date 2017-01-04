@@ -2,16 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="cn.thextrader.monitor.UserJmxDao">
+<mapper namespace="org.jvm.monitor.UserJmxDao">
     <select id="getJmxurlByAppName" resultType="string">
         SELECT jmx_url from jmx_manager WHERE application_name = #{appName}
     </select>
 
-    <select id="queryUserJmxPage" resultMap="UserJmx" parameterType="cn.thextrader.monitor.UserJmx">
+    <select id="queryUserJmxPage" resultMap="UserJmx" parameterType="org.jvm.monitor.UserJmx">
     	SELECT * FROM jmx_manager where 1=1
         <include refid="wheres"></include>
     </select>
-    <select id="queryUserJmxCount" resultType="int" parameterType="cn.thextrader.monitor.UserJmx">
+    <select id="queryUserJmxCount" resultType="int" parameterType="org.jvm.monitor.UserJmx">
     	SELECT count(id) FROM jmx_manager
         <trim prefix="WHERE" prefixOverrides="AND|OR">
             <include refid="wheres"></include>
@@ -49,7 +49,7 @@
         SELECT * from jmx_manager WHERE jmx_url=#{jmxUrl}
     </select>
 
-    <insert id="addJmx" parameterType="cn.thextrader.monitor.UserJmx" useGeneratedKeys="true" keyProperty="id">
+    <insert id="addJmx" parameterType="org.jvm.monitor.UserJmx" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO jmx_manager(erp,jmx_url,application_name,jmx_username,jmx_pwd,state,servername,back,back1,reconnNum)
         VALUES (#{erp},#{jmxUrl},#{applicationName},#{jmxUsername},#{jmxPwd},#{state},#{serverName},#{monitorIp},#{monitorPort},#{reconnNum})
     </insert>
@@ -58,11 +58,11 @@
         DELETE FROM jmx_manager WHERE jmx_url=#{jmxUrl}
     </delete>
 
-    <update id="updateJmx" parameterType="cn.thextrader.monitor.UserJmx">
+    <update id="updateJmx" parameterType="org.jvm.monitor.UserJmx">
         UPDATE jmx_manager SET state = #{state},jmx_username = #{jmxUsername},jmx_pwd = #{jmxPwd} WHERE jmx_url = #{jmxUrl}
     </update>
     
-    <update id="updateAllJmx" parameterType="cn.thextrader.monitor.UserJmx">
+    <update id="updateAllJmx" parameterType="org.jvm.monitor.UserJmx">
         UPDATE jmx_manager 
         <set>
         	<if test="serverName!=null and serverName!='' ">
@@ -84,7 +84,7 @@
     <update id="updateJmxConnectedState" parameterType="string">
         UPDATE jmx_manager SET state=0 WHERE jmx_url = #{jmxUrl}
     </update>
-    <resultMap id="UserJmx" type="cn.thextrader.monitor.UserJmx">
+    <resultMap id="UserJmx" type="org.jvm.monitor.UserJmx">
         <id property="id" column="id"/>
         <result property="erp" column="erp"/>
         <result property="jmxUrl" column="jmx_url"/>

@@ -7,7 +7,7 @@
        default-autowire="byName">
        
 	<context:property-placeholder location="classpath:config.properties" ignore-unresolvable="true"/>
-    <context:component-scan base-package="cn.thextrader.monitor" />
+    <context:component-scan base-package="org.jvm.monitor" />
     <context:annotation-config/>
     <!-- 调度业务 -->
     <aop:config proxy-target-class="true"/>
@@ -27,13 +27,13 @@
       <constructor-arg index="2" value="${redis.server.port}" type="int"/>
     </bean>
 
-    <bean id="springContextUtils" class="cn.thextrader.monitor.SpringContextUtils" />
+    <bean id="springContextUtils" class="org.jvm.monitor.SpringContextUtils" />
 
-    <bean id="jmxConnectionHandler" class="cn.thextrader.device.tools.vm.jmx.impl.JmxConnectionHandler"  init-method="start" >
+    <bean id="jmxConnectionHandler" class="org.jvm.device.tools.vm.jmx.impl.JmxConnectionHandler"  init-method="start" >
     	<property name="userJmxDao" ref="userJmxDao" />
     </bean>
 
-	<bean id="jvmdebugConstant" class="cn.thextrader.monitor.Constant" init-method="validate">
+	<bean id="jvmdebugConstant" class="org.jvm.monitor.Constant" init-method="validate">
 		<property name="CACHESTORETIME" value="${cache.data.storetime}" />
 		<property name="PREFIX" value="${cache.data.prefix}" />
 	</bean>
